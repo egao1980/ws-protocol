@@ -78,11 +78,17 @@
 (defmethod close-connection ((connection websocket-driver-connection)
                              &key code reason)
   (let ((driver (connection-driver connection)))
-    (websocket-driver:close-connection
-     driver
-     (or reason "")
-     (or code 1000))
-    (setf (ws-protocol:%connection-ready-state connection) :closed)
+    ;; Idempotent: driver may destroy its read thread; a second close
+    ;; (with-connection unwind after explicit ws:close) signals
+    ;; bordeaux-threads "Cannot destroy thread because it already exited"
+    ;; on some platforms (seen on darwin CI).
+    (unless (eq (ws-protocol:%connection-ready-state connection) :closed)
+      (ignore-errors
+        (websocket-driver:close-connection
+         driver
+         (or reason "")
+         (or code 1000)))
+      (setf (ws-protocol:%connection-ready-state connection) :closed))
     t))
 
 (defmethod on-event ((connection websocket-driver-connection) event handler)
