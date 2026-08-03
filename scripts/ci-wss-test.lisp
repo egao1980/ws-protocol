@@ -1,5 +1,5 @@
 ;;;; WSS smoke with cl-stack-ssl overlay already on LD_LIBRARY_PATH.
-;;;; Expects OPENSSL_NATIVE / staged package on CL_SOURCE_REGISTRY.
+;;;; Expects CL_STACK_SSL_ROOT = extracted OCI package dir (contains .asd).
 
 (setf *debugger-hook*
       (lambda (c h)
@@ -12,7 +12,19 @@
 (setf (uiop:getenv "WS_PROTOCOL_WSS") "1")
 (setf (uiop:getenv "WS_PROTOCOL_WSS_CHILD") "1")
 
+(defun %register-ssl-root ()
+  (let ((root (uiop:getenv "CL_STACK_SSL_ROOT")))
+    (unless (and root (probe-file (merge-pathnames "cl-stack-ssl.asd"
+                                                   (uiop:ensure-directory-pathname root))))
+      (error "CL_STACK_SSL_ROOT unset or missing cl-stack-ssl.asd: ~S" root))
+    (asdf:initialize-source-registry
+     `(:source-registry
+       (:directory ,(uiop:ensure-directory-pathname root))
+       :inherit-configuration))
+    (format t "~&; CL_STACK_SSL_ROOT=~A~%" root)))
+
 (defun %load-ssl ()
+  (%register-ssl-root)
   (asdf:load-system "cl+ssl")
   (asdf:load-system "cl-stack-ssl")
   (let* ((sym (find-symbol "ENSURE-SSL" "CL-STACK-SSL"))

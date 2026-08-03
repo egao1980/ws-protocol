@@ -129,6 +129,8 @@ jobs:
         shell: bash
         env:
           WS_PROTOCOL_WSS: "1"
+          # CL_STACK_SSL_ROOT set by prior step; script registers it with ASDF
         run: |
-          export CL_SOURCE_REGISTRY="$(pwd)//:${CL_STACK_SSL_ROOT}//:"
+          test -f "${CL_STACK_SSL_ROOT}/cl-stack-ssl.asd"
+          test -f "${OPENSSL_NATIVE}/libssl.so"
           qlot exec ros -S . -l scripts/ci-wss-test.lisp -q
