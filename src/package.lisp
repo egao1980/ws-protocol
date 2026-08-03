@@ -20,6 +20,7 @@
            #:ws-client-auth
            #:ws-client-proxy
            #:ws-client-verify
+           #:ws-client-ca-path
            #:make-ws-client
            #:ws-connection
            #:ws-connection-p

@@ -8,7 +8,7 @@
       (error 'ws-error :message "*ws-backend* is not bound")))
 
 (defun connect (url &key (backend nil) (client nil clientp)
-                      headers protocols auth proxy (verify t))
+                      headers protocols auth proxy (verify t) ca-path)
   "Blocking WebSocket connect → WS-CONNECTION."
   (let* ((backend (%backend backend))
          (client (if clientp
@@ -19,11 +19,12 @@
                                          :protocols protocols
                                          :auth auth
                                          :proxy proxy
-                                         :verify verify)))))
+                                         :verify verify
+                                         :ca-path ca-path)))))
     (ws-protocol:connect backend client url)))
 
 (defun connect-async (url &key (backend nil) (client nil clientp)
-                            headers protocols auth proxy (verify t))
+                            headers protocols auth proxy (verify t) ca-path)
   "Async connect → Blackbird promise of WS-CONNECTION.
    Do not call blocking CONNECT on an event-protocol loop thread."
   (let* ((backend (%backend backend))
@@ -35,7 +36,8 @@
                                          :protocols protocols
                                          :auth auth
                                          :proxy proxy
-                                         :verify verify)))))
+                                         :verify verify
+                                         :ca-path ca-path)))))
     (blackbird:with-promise (resolve reject)
       (ws-protocol:connect-async
        backend client url

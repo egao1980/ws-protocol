@@ -15,7 +15,9 @@
          :documentation "(:basic u p) | (:bearer tok) | Authorization string.")
    (proxy :initarg :proxy :accessor ws-client-proxy :initform nil)
    (verify :initarg :verify :accessor ws-client-verify :initform t
-           :documentation "TLS verify for wss:// (passed to backend).")))
+           :documentation "TLS verify for wss:// (passed to backend).")
+   (ca-path :initarg :ca-path :accessor ws-client-ca-path :initform nil
+            :documentation "Optional CA file/dir for wss:// verify (cl+ssl).")))
 
 (defun ws-client-p (x) (typep x 'ws-client))
 

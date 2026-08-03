@@ -28,14 +28,15 @@
 
 (defsystem "ws-protocol/tests"
   :depends-on ("ws-protocol" "ws-backend-websocket-driver" "rove"
-               "websocket-driver" "clack" "hunchentoot"
-               "bordeaux-threads")
+               "websocket-driver" "clack" "clack-handler-hunchentoot"
+               "hunchentoot" "bordeaux-threads")
   :pathname "tests"
   :serial t
   :components ((:file "package")
                (:file "echo-fixture")
                (:file "protocol-test")
-               (:file "backend-test"))
+               (:file "backend-test")
+               (:file "wss-test"))
   :perform (test-op (o c)
              (unless (symbol-call :rove :run c)
                (error "tests failed for ~A" (component-name c)))))

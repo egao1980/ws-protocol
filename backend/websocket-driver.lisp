@@ -54,9 +54,11 @@
              :message "websocket-driver backend does not support :proxy yet"))
     (handler-case
         (progn
-          (websocket-driver:start-connection
-           driver
-           :verify (ws-client-verify client))
+          (apply #'websocket-driver:start-connection
+                 driver
+                 :verify (ws-client-verify client)
+                 (when (ws-client-ca-path client)
+                   (list :ca-path (ws-client-ca-path client))))
           (setf (ws-protocol:%connection-ready-state conn) :open)
           conn)
       (error (e)
@@ -76,11 +78,17 @@
 (defmethod close-connection ((connection websocket-driver-connection)
                              &key code reason)
   (let ((driver (connection-driver connection)))
-    (websocket-driver:close-connection
-     driver
-     (or reason "")
-     (or code 1000))
-    (setf (ws-protocol:%connection-ready-state connection) :closed)
+    ;; Idempotent: driver may destroy its read thread; a second close
+    ;; (with-connection unwind after explicit ws:close) signals
+    ;; bordeaux-threads "Cannot destroy thread because it already exited"
+    ;; on some platforms (seen on darwin CI).
+    (unless (eq (ws-protocol:%connection-ready-state connection) :closed)
+      (ignore-errors
+        (websocket-driver:close-connection
+         driver
+         (or reason "")
+         (or code 1000)))
+      (setf (ws-protocol:%connection-ready-state connection) :closed))
     t))
 
 (defmethod on-event ((connection websocket-driver-connection) event handler)
