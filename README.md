@@ -21,14 +21,21 @@ Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack
 
 `wss://` uses cl+ssl (driver); production TLS = `cl-stack-ssl` overlay (`#35`).
 
-## Test
+## Install / test
+
+**Deps = [cl-repository](https://github.com/egao1980/cl-repository)** against `ghcr.io/egao1980/cl-systems` (same as http-backend-*). CI: `scripts/ci-install.lisp` + `scripts/ci-test.lisp`.
+
+WS stack libs (`websocket-driver`, `clack`, …) are not OCI-published yet → temporary QL fallback in `ci-install.lisp` until `cl-stack-systems/imports/` grows them.
 
 ```bash
-qlot install
-qlot exec ros -e '(asdf:test-system "ws-protocol")'
+# CI-shaped local run (needs cl-repository checkout + GHCR read):
+export CL_SOURCE_REGISTRY="$(pwd)//:/path/to/cl-repository//:"
+ros -l scripts/ci-install.lisp -q
+# stage cl-stack-ssl native/ onto LD_LIBRARY_PATH, then:
+ros -l scripts/ci-test.lisp -q
 
-# WSS smoke (local self-signed Clack echo; needs OpenSSL for cl+ssl)
-WS_PROTOCOL_WSS=1 qlot exec ros -e '(asdf:test-system "ws-protocol")'
+# WSS smoke:
+WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -l scripts/ci-test.lisp -q
 
 # Clean-container OCI path (linux/amd64, no libssl-dev):
 # ./scripts/smoke-wss-clean-container.sh

@@ -13,15 +13,18 @@
     (and v (not (member v '("0" "false" "no" "") :test #'string-equal)))))
 
 (defun %run-wss-in-child ()
-  "Spawn scripts/run-wss-smoke.lisp via ros (not nested qlot); return T on 0."
+  "Spawn scripts/run-wss-smoke.lisp via ros; inherit CL_SOURCE_REGISTRY."
   (let* ((script (namestring
                   (truename
                    (asdf:system-relative-pathname
                     "ws-protocol" "scripts/run-wss-smoke.lisp"))))
          (root (namestring
                 (truename (asdf:system-relative-pathname "ws-protocol" ""))))
-         (cmd (format nil "cd ~A && WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -S . -l ~A"
+         (reg (or (uiop:getenv "CL_SOURCE_REGISTRY")
+                  (format nil "~A//:" root)))
+         (cmd (format nil "cd ~A && WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 CL_SOURCE_REGISTRY=~A ros -l ~A"
                       (uiop:escape-sh-token root)
+                      (uiop:escape-sh-token reg)
                       (uiop:escape-sh-token script)))
          (code (nth-value
                 2
