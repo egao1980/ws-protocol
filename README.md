@@ -19,13 +19,19 @@ Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack
     (ws:send conn "hi")))
 ```
 
-`wss://` uses cl+ssl (driver); production TLS overlays = `cl-stack-ssl` (`#35`).
+`wss://` uses cl+ssl (driver); production TLS = `cl-stack-ssl` overlay (`#35`).
 
 ## Test
 
 ```bash
 qlot install
 qlot exec ros -e '(asdf:test-system "ws-protocol")'
+
+# WSS smoke (local self-signed Clack echo; needs OpenSSL for cl+ssl)
+WS_PROTOCOL_WSS=1 qlot exec ros -e '(asdf:test-system "ws-protocol")'
+
+# Clean-container OCI path (linux/amd64, no libssl-dev):
+# ./scripts/smoke-wss-clean-container.sh
 ```
 
 ## License

@@ -54,9 +54,11 @@
              :message "websocket-driver backend does not support :proxy yet"))
     (handler-case
         (progn
-          (websocket-driver:start-connection
-           driver
-           :verify (ws-client-verify client))
+          (apply #'websocket-driver:start-connection
+                 driver
+                 :verify (ws-client-verify client)
+                 (when (ws-client-ca-path client)
+                   (list :ca-path (ws-client-ca-path client))))
           (setf (ws-protocol:%connection-ready-state conn) :open)
           conn)
       (error (e)

@@ -13,6 +13,7 @@ concurrency:
 env:
   SBCL_VERSION: 2.4.11
   ROSWELL_VERSION: "26.02.116"
+  CL_STACK_SSL_VERSION: "3.4.1"
 
 jobs:
   test:
@@ -60,7 +61,7 @@ jobs:
         shell: bash
         run: |
           ros install rove blackbird cl-base64 bordeaux-threads \
-            websocket-driver event-emitter clack hunchentoot
+            websocket-driver event-emitter clack clack-handler-hunchentoot hunchentoot
 
       - name: Test (Unix)
         if: runner.os != 'Windows'
@@ -74,3 +75,60 @@ jobs:
         run: |
           export CL_SOURCE_REGISTRY="$(pwd)//:"
           ros -S . -e '(asdf:test-system "ws-protocol")' -q
+
+  # #35 — WSS via cl-stack-ssl overlay (linux/amd64 Done-when)
+  wss-openssl:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oras-project/setup-oras@v1
+        with:
+          version: 1.2.3
+
+      - name: Install Roswell
+        shell: bash
+        run: |
+          curl -sL https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | bash
+          echo "$HOME/.roswell/bin" >> "$GITHUB_PATH"
+
+      - name: Install SBCL
+        shell: bash
+        run: |
+          ros install "sbcl-bin/$SBCL_VERSION"
+          ros use "sbcl-bin/$SBCL_VERSION"
+          ros install qlot
+
+      - name: qlot install
+        shell: bash
+        run: qlot install
+
+      - name: Stage cl-stack-ssl overlay (OCI)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${GITHUB_TOKEN}" | oras login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          mkdir -p /tmp/ssl-pull /tmp/ssl-pkg
+          oras pull "ghcr.io/egao1980/cl-systems/cl-stack-ssl:${CL_STACK_SSL_VERSION}" \
+            --platform linux/amd64 -o /tmp/ssl-pull
+          tar -xzf /tmp/ssl-pull/cl-stack-ssl-${CL_STACK_SSL_VERSION}.tar.gz -C /tmp/ssl-pkg
+          tar -xzf /tmp/ssl-pull/native-library.tar.gz -C /tmp/ssl-pkg
+          PKG="/tmp/ssl-pkg/cl-stack-ssl-${CL_STACK_SSL_VERSION}"
+          NAT="${PKG}/native"
+          test -f "${NAT}/libssl.so"
+          echo "OPENSSL_NATIVE=${NAT}" >> "$GITHUB_ENV"
+          echo "CL_STACK_SSL_ROOT=${PKG}" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${NAT}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          ls -la "${NAT}"
+
+      - name: WSS smoke (overlay OpenSSL)
+        shell: bash
+        env:
+          WS_PROTOCOL_WSS: "1"
+        run: |
+          export CL_SOURCE_REGISTRY="$(pwd)//:${CL_STACK_SSL_ROOT}//:"
+          qlot exec ros -S . -l scripts/ci-wss-test.lisp -q
