@@ -1,6 +1,5 @@
 ;;;; Phase 2: overlay OpenSSL on loader path, then test.
 ;;;; Expects ci-install.lisp + OPENSSL_NATIVE / LD_LIBRARY_PATH.
-;;;; Set WS_PROTOCOL_WSS=1 (+ CHILD=1) for the wss-openssl job.
 
 (setf *debugger-hook*
       (lambda (c h)
@@ -37,7 +36,11 @@
          (error "cl-stack-ssl loaded but ENSURE-SSL missing"))
        (format t "~&; cl-stack-ssl => ~S~%"
                (multiple-value-list (funcall sym))))
-     ;; Capture success: asdf:test-system signals on failure for our test-op.
+     ;; Fresh SBCL: ql:quickload again so ASDF sees lack/clack/… from QL.
+     (format t "~&; ci: ql:quickload WS stack~%")
+     (ql:quickload '("rove" "blackbird" "event-emitter" "websocket-driver"
+                     "clack" "clack-handler-hunchentoot" "hunchentoot")
+                   :silent t)
      (asdf:test-system "ws-protocol")
      (setf ok t)))
   (format t "~&; ci: test phase ~A~%" (if ok "done" "FAILED"))

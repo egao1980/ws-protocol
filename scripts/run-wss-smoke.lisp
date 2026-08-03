@@ -22,6 +22,9 @@
     (error "cl-stack-ssl loaded but ENSURE-SSL missing"))
   (format t "~&; cl-stack-ssl => ~S~%" (multiple-value-list (funcall sym))))
 
+(ql:quickload '("rove" "blackbird" "event-emitter" "websocket-driver"
+                "clack" "clack-handler-hunchentoot" "hunchentoot")
+              :silent t)
 (asdf:load-system "ws-protocol/tests")
 
 (let ((ok (rove:run (asdf:find-system "ws-protocol/tests"))))
