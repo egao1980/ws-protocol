@@ -26,17 +26,39 @@
 
 (cl-repo:add-registry "https://ghcr.io" :namespace "egao1980/cl-systems" :priority :prepend)
 
-(defun ci-install (oci-name &key (version "latest"))
-  (format t "~&; ci: install ~a:~a~%" oci-name version)
-  (cl-repository-client/installer:install-system
-   "https://ghcr.io" (format nil "egao1980/cl-systems/~a" oci-name) version)
-  (cl-repository-client/asdf-integration:configure-asdf-source-registry))
+(defun ci-newest-tag (oci-name)
+  "Newest version tag on ghcr.io/egao1980/cl-systems/NAME (excludes 'latest')."
+  (let* ((token (or (uiop:getenv "GITHUB_TOKEN") (uiop:getenv "GH_TOKEN")))
+         (auth (when token
+                 (cl-oci-client/auth:make-auth-config
+                  :username (or (uiop:getenv "GITHUB_ACTOR") "x-access-token")
+                  :password token)))
+         (reg (cl-oci-client/registry:make-registry "https://ghcr.io" :auth auth))
+         (repo (format nil "egao1980/cl-systems/~a" oci-name))
+         (tags (cl-oci-client/content-discovery:list-tags reg repo))
+         (version-tags (remove "latest" tags :test #'string=)))
+    (or (cl-repository-client/version-utils:select-preferred-version version-tags)
+        (first tags)
+        (error "ci-newest-tag: no tags for ~a" oci-name))))
 
-(defun ci-patch-stack-ssl (&optional (version "3.4.1"))
-  (let ((setup (probe-file
-                (merge-pathnames
-                 (format nil "cl-stack-ssl/~a/src/setup.lisp" version)
-                 (cl-repository-client/installer:systems-root)))))
+(defun ci-install (oci-name &key version)
+  "Install OCI package. VERSION nil -> newest published version tag."
+  (let ((version (or version (ci-newest-tag oci-name))))
+    (format t "~&; ci: install ~a:~a~%" oci-name version)
+    (cl-repository-client/installer:install-system
+     "https://ghcr.io" (format nil "egao1980/cl-systems/~a" oci-name) version)
+    (cl-repository-client/asdf-integration:configure-asdf-source-registry)
+    version))
+
+(defun ci-patch-stack-ssl (&optional version)
+  (let* ((root (cl-repository-client/installer:systems-root))
+         (setup
+           (or (when version
+                 (probe-file
+                  (merge-pathnames
+                   (format nil "cl-stack-ssl/~a/src/setup.lisp" version) root)))
+               (first (directory
+                       (merge-pathnames "cl-stack-ssl/*/src/setup.lisp" root))))))
     (when setup
       (let* ((text (uiop:read-file-string setup))
              (fixed (search "(defconstant +openssl-version+" text :test #'char-equal)))
@@ -51,12 +73,19 @@
 
 (call-with-ci-muffles
  (lambda ()
-   (let ((cl-stack-ssl-version (or (uiop:getenv "CL_STACK_SSL_VERSION") "3.4.1")))
+   (let ((cl-stack-ssl-version (uiop:getenv "CL_STACK_SSL_VERSION")))
      ;; All OCI installs before any ql:quickload that might load cffi/cl+ssl.
      (ci-install "cl-plus-ssl" :version "latest")
-     (ci-install "cl-base64" :version "3.1")
-     (ci-install "cl-stack-ssl" :version cl-stack-ssl-version)
-     (ci-patch-stack-ssl cl-stack-ssl-version)
+     (ci-install "cl-base64")
+     ;; No :latest tag for cl-stack-ssl — resolve newest version tag.
+     (let ((ssl-ver (ci-install "cl-stack-ssl" :version cl-stack-ssl-version)))
+       (ci-patch-stack-ssl ssl-ver)
+       (when (uiop:getenv "GITHUB_ENV")
+         (with-open-file (out (uiop:getenv "GITHUB_ENV")
+                              :direction :output
+                              :if-exists :append
+                              :if-does-not-exist :create)
+           (format out "CL_STACK_SSL_VERSION=~a~%" ssl-ver))))
      ;; QL only for systems not in cl-systems yet. Do not ASDF-load
      ;; cl-stack-ssl here — phase 2 loads it with overlay on loader path.
      (format t "~&; ci: ql fallback WS stack (not yet in cl-systems)~%")
