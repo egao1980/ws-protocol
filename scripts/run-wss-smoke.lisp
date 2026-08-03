@@ -1,5 +1,5 @@
-;;;; Isolated WSS smoke child — abort-exits after green assertions.
-;;;; Expects cl-repo install already done (same CL_SOURCE_REGISTRY as CI).
+;;;; Isolated WSS smoke child — exit code reflects rove; abort-exit avoids
+;;;; cl+ssl teardown SIGSEGV. Expects cl-repo install + CL_SOURCE_REGISTRY.
 (setf *debugger-hook*
       (lambda (c h)
         (declare (ignore h))
@@ -13,15 +13,18 @@
 (asdf:load-system "cl-repository-client")
 (cl-repository-client/asdf-integration:configure-asdf-source-registry)
 (cl-repository-client/asdf-integration:load-system-init-files)
-(ignore-errors (asdf:load-system "cl-stack-ssl"))
+
+;; Require overlay when WSS smoke is the point of the job.
+(asdf:load-system "cl+ssl")
+(asdf:load-system "cl-stack-ssl")
+(let ((sym (find-symbol "ENSURE-SSL" "CL-STACK-SSL")))
+  (unless sym
+    (error "cl-stack-ssl loaded but ENSURE-SSL missing"))
+  (format t "~&; cl-stack-ssl => ~S~%" (multiple-value-list (funcall sym))))
 
 (asdf:load-system "ws-protocol/tests")
 
-(unless (rove:run (asdf:find-system "ws-protocol/tests"))
-  (format *error-output* "~&WSS-SMOKE: rove failed~%")
-  #+sbcl (sb-ext:exit :code 1 :abort t)
-  #-sbcl (uiop:quit 1))
-
-(format *error-output* "~&WSS-SMOKE: did not abort from wss-echo-smoke~%")
-#+sbcl (sb-ext:exit :code 1 :abort t)
-#-sbcl (uiop:quit 1)
+(let ((ok (rove:run (asdf:find-system "ws-protocol/tests"))))
+  (format t "~&WSS-SMOKE ~A~%" (if ok "OK" "FAILED"))
+  #+sbcl (sb-ext:exit :code (if ok 0 1) :abort t)
+  #-sbcl (uiop:quit (if ok 0 1)))

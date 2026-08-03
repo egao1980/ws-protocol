@@ -27,15 +27,19 @@
 (cl-repository-client/asdf-integration:configure-asdf-source-registry)
 (cl-repository-client/asdf-integration:load-system-init-files)
 
-(call-with-ci-muffles
- (lambda ()
-   (asdf:load-system "cl+ssl")
-   (asdf:load-system "cl-stack-ssl")
-   (let ((sym (find-symbol "ENSURE-SSL" "CL-STACK-SSL")))
-     (format t "~&; cl-stack-ssl => ~S~%"
-             (when sym (multiple-value-list (funcall sym)))))
-   (asdf:test-system "ws-protocol")))
-
-(format t "~&; ci: test phase done~%")
-#+sbcl (sb-ext:exit :code 0 :abort t)
-#-sbcl (uiop:quit 0)
+(let ((ok nil))
+  (call-with-ci-muffles
+   (lambda ()
+     (asdf:load-system "cl+ssl")
+     (asdf:load-system "cl-stack-ssl")
+     (let ((sym (find-symbol "ENSURE-SSL" "CL-STACK-SSL")))
+       (unless sym
+         (error "cl-stack-ssl loaded but ENSURE-SSL missing"))
+       (format t "~&; cl-stack-ssl => ~S~%"
+               (multiple-value-list (funcall sym))))
+     ;; Capture success: asdf:test-system signals on failure for our test-op.
+     (asdf:test-system "ws-protocol")
+     (setf ok t)))
+  (format t "~&; ci: test phase ~A~%" (if ok "done" "FAILED"))
+  #+sbcl (sb-ext:exit :code (if ok 0 1) :abort t)
+  #-sbcl (uiop:quit (if ok 0 1)))

@@ -38,16 +38,6 @@
    "https://ghcr.io" (format nil "egao1980/cl-systems/~a" oci-name) version)
   (cl-repository-client/asdf-integration:configure-asdf-source-registry))
 
-(defun ci-load (name &key version)
-  (format t "~&; ci: cl-repo load ~a~@[:~a~]~%" name version)
-  (call-with-ci-muffles
-   (lambda ()
-     (if version
-         (cl-repo:load-system name :version version :sources *ci-ql-sources*)
-         (cl-repo:load-system name :sources *ci-ql-sources*))))
-  (unless (asdf:find-system name nil)
-    (error "ci-load: ~a not installed/findable" name)))
-
 (defun ci-ql (name)
   (unless (asdf:find-system name nil)
     (format t "~&; ci: ql fallback ~a (not yet in cl-systems)~%" name)
@@ -74,7 +64,9 @@
  (lambda ()
    (let ((cl-stack-ssl-version (or (uiop:getenv "CL_STACK_SSL_VERSION") "3.4.1")))
      (ci-install "cl-plus-ssl" :version "latest")
-     (ci-install "cl-base64" :version "latest")
+     ;; Prefer explicit pins: cl-base64:latest is listed by `oras repo tags` but
+     ;; pulls 404 MANIFEST_UNKNOWN; 3.1 works.
+     (ci-install "cl-base64" :version "3.1")
      ;; WS stack not yet imported into cl-stack-systems — QL until published.
      (dolist (n '("rove" "blackbird" "bordeaux-threads" "event-emitter"
                   "websocket-driver" "clack" "clack-handler-hunchentoot"
