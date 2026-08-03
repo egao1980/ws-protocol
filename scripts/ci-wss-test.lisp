@@ -15,8 +15,11 @@
 (defun %load-ssl ()
   (asdf:load-system "cl+ssl")
   (asdf:load-system "cl-stack-ssl")
-  (format t "~&; cl-stack-ssl => ~S~%"
-          (multiple-value-list (cl-stack-ssl:ensure-ssl))))
+  (let* ((sym (find-symbol "ENSURE-SSL" "CL-STACK-SSL"))
+         (vals (when sym (multiple-value-list (funcall sym)))))
+    (format t "~&; cl-stack-ssl => ~S~%" vals)
+    (unless vals
+      (error "cl-stack-ssl:ensure-ssl not found after load"))))
 
 #+sbcl
 (handler-bind ((sb-ext:defconstant-uneql
