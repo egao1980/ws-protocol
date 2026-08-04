@@ -46,6 +46,16 @@ WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -l scripts/ci-test.lisp -q
 # ./scripts/smoke-wss-clean-container.sh
 ```
 
+## Publish
+
+Source-only OCI publish is centralized in [`cl-stack-systems`](https://github.com/egao1980/cl-stack-systems)
+(`imports/ws-protocol/qlfile` pin + shared `publish.yml`). Packaging metadata lives in the `.asd`
+(`auto-package-spec`):
+
+```bash
+gh workflow run publish.yml -R egao1980/cl-stack-systems -f import=ws-protocol
+```
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
