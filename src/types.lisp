@@ -11,6 +11,10 @@
             :documentation "Alist of extra handshake headers.")
    (protocols :initarg :protocols :accessor ws-client-protocols :initform nil
               :documentation "Sec-WebSocket-Protocol list (strings).")
+   (transport :initarg :transport :accessor ws-client-transport :initform :auto
+              :documentation
+              "WS transport preference: :auto | :http/1.1 (RFC 6455 Upgrade) |
+               :http/2 (RFC 8441 Extended CONNECT).")
    (auth :initarg :auth :accessor ws-client-auth :initform nil
          :documentation "(:basic u p) | (:bearer tok) | Authorization string.")
    (proxy :initarg :proxy :accessor ws-client-proxy :initform nil)

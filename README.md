@@ -1,20 +1,22 @@
 # ws-protocol
 
-MIT WebSocket **client** protocol for [cl-stack](https://github.com/egao1980/cl-stack) (RFC 6455).
+MIT WebSocket **client** protocol for [cl-stack](https://github.com/egao1980/cl-stack) (RFC 6455 + RFC 8441 transport preference).
 
 Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack/blob/main/docs/capabilities/ws-protocol.md) · Tracks `#34` / `#35`.
+
+**0.2.0** — CLOS transport preference (`:auto` / `:http/1.1` Upgrade / `:http/2` Extended CONNECT), `backend-ws-transports`, `make-http2-websocket-connect-headers` (RFC 8441). Wire for `:http/2` lives in HTTP backends.
 
 ## Systems
 
 | ASDF | Role |
 |------|------|
-| `ws-protocol` | Generics, conditions, `ws` facade (promises via Blackbird) |
-| `ws-backend-websocket-driver` | [`websocket-driver`](https://github.com/fukamachi/websocket-driver) backend |
+| `ws-protocol` | Generics, conditions, transport policy, `ws` facade (promises via Blackbird) |
+| `ws-backend-websocket-driver` | [`websocket-driver`](https://github.com/fukamachi/websocket-driver) — `:http/1.1` Upgrade |
 
 ```lisp
 (asdf:load-system "ws-backend-websocket-driver")
 (let ((*ws-backend* (ws-backend-websocket-driver:make-websocket-driver-backend)))
-  (ws:with-connection (conn "ws://127.0.0.1:5000/echo")
+  (ws:with-connection (conn "ws://127.0.0.1:5000/echo" :transport :http/1.1)
     (ws:on conn :message (lambda (msg) (print msg)))
     (ws:send conn "hi")))
 ```

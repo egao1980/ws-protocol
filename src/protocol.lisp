@@ -2,24 +2,34 @@
 
 ;;; Protocol generics. Backends specialize CONNECT / SEND-* / …
 
-(defgeneric connect (backend client url &key)
-  (:documentation "Blocking connect → WS-CONNECTION (open after handshake).")
-  (:method ((backend ws-backend) client url &key)
-    (declare (ignore client url))
+(defgeneric connect (backend client url &key transport)
+  (:documentation
+   "Blocking connect → WS-CONNECTION (open after handshake).
+
+    TRANSPORT — :auto | :http/1.1 | :http/2 (overrides CLIENT :transport).
+    :BEFORE resolves the transport against BACKEND-WS-TRANSPORTS.")
+  (:method :before ((backend ws-backend) client url &key transport)
+    (declare (ignore url))
+    (resolve-ws-transport backend client :transport transport))
+  (:method ((backend ws-backend) client url &key transport)
+    (declare (ignore client url transport))
     (error 'unsupported-operation :operation 'connect
            :message (format nil "backend ~A does not implement CONNECT"
                             (backend-name backend)))))
 
-(defgeneric connect-async (backend client url &key callback error-callback)
+(defgeneric connect-async (backend client url &key transport callback error-callback)
   (:documentation
    "Start CONNECT off the calling thread.
     CALLBACK receives WS-CONNECTION; ERROR-CALLBACK a condition.
     Default: BT thread around CONNECT.")
-  (:method ((backend ws-backend) client url &key callback error-callback)
+  (:method :before ((backend ws-backend) client url &key transport callback error-callback)
+    (declare (ignore url callback error-callback))
+    (resolve-ws-transport backend client :transport transport))
+  (:method ((backend ws-backend) client url &key transport callback error-callback)
     (bt:make-thread
      (lambda ()
        (handler-case
-           (let ((conn (connect backend client url)))
+           (let ((conn (connect backend client url :transport transport)))
              (when callback (funcall callback conn)))
          (error (e)
            (if error-callback
