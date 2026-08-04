@@ -4,7 +4,7 @@ MIT WebSocket **client** protocol for [cl-stack](https://github.com/egao1980/cl-
 
 Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack/blob/main/docs/capabilities/ws-protocol.md) · Tracks `#34` / `#35`.
 
-**0.2.0** — CLOS transport preference (`:auto` / `:http/1.1` Upgrade / `:http/2` Extended CONNECT), `backend-ws-transports`, `make-http2-websocket-connect-headers` (RFC 8441). Wire for `:http/2` lives in HTTP backends.
+**0.2.2** — CLOS transport preference + `feature-or-env-enabled-p`; cookbook/demo. Wire for `:http/2` lives in HTTP backends (`http-backend-async`).
 
 ## Systems
 
@@ -15,11 +15,14 @@ Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack
 
 ```lisp
 (asdf:load-system "ws-backend-websocket-driver")
-(let ((*ws-backend* (ws-backend-websocket-driver:make-websocket-driver-backend)))
-  (ws:with-connection (conn "ws://127.0.0.1:5000/echo" :transport :http/1.1)
+(let ((backend (ws-backend-websocket-driver:make-websocket-driver-backend)))
+  (ws:with-connection (conn "ws://127.0.0.1:5000/echo"
+                            :backend backend :transport :http/1.1)
     (ws:on conn :message (lambda (msg) (print msg)))
     (ws:send conn "hi")))
 ```
+
+Local echo demo: `ros -l scripts/demo.lisp`. Recipes: [cl-stack websocket cookbook](https://github.com/egao1980/cl-stack/blob/main/docs/cookbooks/websocket.md).
 
 `wss://` uses cl+ssl (driver); production TLS = `cl-stack-ssl` overlay (`#35`).
 
