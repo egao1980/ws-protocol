@@ -1,21 +1,22 @@
 (defsystem "ws-protocol"
-  :version "0.1.0"
+  :version "0.2.0"
   :description "CLOS WebSocket client protocol for cl-stack (generics + facade)"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("blackbird" "cl-base64" "bordeaux-threads")
+  :depends-on ("blackbird" "cl-base64" "bordeaux-threads" "quri")
   :serial t
   :pathname "src"
   :components ((:file "package")
                (:file "conditions")
                (:file "types")
                (:file "auth")
+               (:file "transport")
                (:file "protocol")
                (:file "facade"))
   :in-order-to ((test-op (test-op "ws-protocol/tests"))))
 
 (defsystem "ws-backend-websocket-driver"
-  :version "0.1.0"
+  :version "0.2.0"
   :description "websocket-driver backend for ws-protocol"
   :author "egao1980"
   :license "MIT"
@@ -35,6 +36,7 @@
   :components ((:file "package")
                (:file "echo-fixture")
                (:file "protocol-test")
+               (:file "transport-test")
                (:file "backend-test")
                (:file "wss-test"))
   :perform (test-op (o c)

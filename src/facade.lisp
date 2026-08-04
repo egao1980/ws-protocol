@@ -8,8 +8,11 @@
       (error 'ws-error :message "*ws-backend* is not bound")))
 
 (defun connect (url &key (backend nil) (client nil clientp)
-                      headers protocols auth proxy (verify t) ca-path)
-  "Blocking WebSocket connect → WS-CONNECTION."
+                      headers protocols auth proxy (verify t) ca-path
+                      (transport :auto))
+  "Blocking WebSocket connect → WS-CONNECTION.
+
+   TRANSPORT — :auto | :http/1.1 (RFC 6455 Upgrade) | :http/2 (RFC 8441)."
   (let* ((backend (%backend backend))
          (client (if clientp
                      client
@@ -17,14 +20,16 @@
                          (make-ws-client backend
                                          :headers headers
                                          :protocols protocols
+                                         :transport transport
                                          :auth auth
                                          :proxy proxy
                                          :verify verify
                                          :ca-path ca-path)))))
-    (ws-protocol:connect backend client url)))
+    (ws-protocol:connect backend client url :transport transport)))
 
 (defun connect-async (url &key (backend nil) (client nil clientp)
-                            headers protocols auth proxy (verify t) ca-path)
+                            headers protocols auth proxy (verify t) ca-path
+                            (transport :auto))
   "Async connect → Blackbird promise of WS-CONNECTION.
    Do not call blocking CONNECT on an event-protocol loop thread."
   (let* ((backend (%backend backend))
@@ -34,6 +39,7 @@
                          (make-ws-client backend
                                          :headers headers
                                          :protocols protocols
+                                         :transport transport
                                          :auth auth
                                          :proxy proxy
                                          :verify verify
@@ -41,6 +47,7 @@
     (blackbird:with-promise (resolve reject)
       (ws-protocol:connect-async
        backend client url
+       :transport transport
        :callback (lambda (conn) (resolve conn))
        :error-callback (lambda (e) (reject e))))))
 

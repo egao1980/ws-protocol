@@ -89,8 +89,9 @@
      ;; QL only for systems not in cl-systems yet. Do not ASDF-load
      ;; cl-stack-ssl here — phase 2 loads it with overlay on loader path.
      (format t "~&; ci: ql fallback WS stack (not yet in cl-systems)~%")
-     (ql:quickload '("rove" "blackbird" "event-emitter" "websocket-driver"
-                     "clack" "clack-handler-hunchentoot" "hunchentoot")
+     (ql:quickload '("rove" "blackbird" "event-emitter" "quri"
+                     "websocket-driver" "clack" "clack-handler-hunchentoot"
+                     "hunchentoot")
                    :silent t))))
 
 (format t "~&; ci: install phase done~%")

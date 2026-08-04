@@ -13,12 +13,16 @@
    (handlers :initform (make-hash-table) :accessor mock-handlers))
   (:default-initargs :name "mock"))
 
+(defmethod backend-ws-transports ((backend mock-backend))
+  (declare (ignore backend))
+  '(:http/1.1))
+
 (defclass mock-connection (ws-connection)
   ((backend :initarg :backend :reader mock-connection-backend)
    (inbox :initform nil :accessor mock-inbox)))
 
-(defmethod ws-protocol:connect ((backend mock-backend) client url &key)
-  (declare (ignore client))
+(defmethod ws-protocol:connect ((backend mock-backend) client url &key transport)
+  (declare (ignore client transport))
   (setf (mock-last-url backend) url)
   (make-instance 'mock-connection :backend backend :url url :ready-state :open))
 

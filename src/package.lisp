@@ -7,6 +7,9 @@
            #:ws-timeout-error
            #:unsupported-operation
            #:unsupported-operation-operation
+           #:ws-transport-not-available
+           #:ws-transport-not-available-requested
+           #:ws-transport-not-available-negotiated
            #:ws-error-message
            ;; types
            #:ws-backend
@@ -17,6 +20,7 @@
            #:ws-client-backend
            #:ws-client-headers
            #:ws-client-protocols
+           #:ws-client-transport
            #:ws-client-auth
            #:ws-client-proxy
            #:ws-client-verify
@@ -39,6 +43,17 @@
            ;; auth
            #:authorization-header-value
            #:inject-auth-headers
+           ;; transport (CLOS + RFC 8441)
+           #:*valid-ws-transports*
+           #:normalize-ws-transport
+           #:ws-transport-preference-p
+           #:effective-ws-transport
+           #:resolve-ws-transport
+           #:backend-ws-transports
+           #:backend-supports-ws-transport-p
+           #:make-http2-websocket-connect-headers
+           #:http2-websocket-path
+           #:http2-websocket-authority
            ;; protocol
            #:connect
            #:connect-async
@@ -48,7 +63,8 @@
            #:close-connection
            #:on-event
            #:ready-state)
-  (:documentation "WebSocket client protocol (RFC 6455)."))
+  (:documentation
+   "WebSocket client protocol (RFC 6455 + RFC 8441 transport preference)."))
 
 (defpackage #:ws
   (:use #:cl #:ws-protocol)
