@@ -1,5 +1,5 @@
 (defsystem "ws-protocol"
-  :version "0.2.1"
+  :version "0.2.2"
   :description "CLOS WebSocket client protocol for cl-stack (generics + facade)"
   :author "egao1980"
   :license "MIT"
@@ -17,7 +17,7 @@
   :in-order-to ((test-op (test-op "ws-protocol/tests"))))
 
 (defsystem "ws-backend-websocket-driver"
-  :version "0.2.1"
+  :version "0.2.2"
   :description "websocket-driver backend for ws-protocol"
   :author "egao1980"
   :license "MIT"
