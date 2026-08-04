@@ -42,3 +42,13 @@
   (let ((*ws-backend* (make-websocket-driver-backend)))
     (ok (signals (ws:connect "ws://example/echo" :transport :http/2)
                  'ws-transport-not-available))))
+
+(deftest feature-or-env-enabled-p-basic
+  (ok (feature-or-env-enabled-p :common-lisp))
+  (ok (not (feature-or-env-enabled-p :definitely-not-a-feature-xyzzy)))
+  (let ((name "WS_PROTOCOL_FEATURE_OR_ENV_TEST"))
+    (setf (uiop:getenv name) "1")
+    (ok (feature-or-env-enabled-p nil name))
+    (setf (uiop:getenv name) "0")
+    (ok (not (feature-or-env-enabled-p nil name)))
+    (setf (uiop:getenv name) "")))
