@@ -1,7 +1,5 @@
-;;;; Phase 1: install deps via cl-repository (GHCR).
-;;;; OCI overlays first (no ASDF-load). QL fallback for unpublished WS stack
-;;;; AFTER cl-stack-ssl is on disk — loading cffi/cl+ssl mid-flight before
-;;;; remaining HTTPS pulls is unsafe (see LESSONS_LEARNED).
+;;;; Phase 1: install SUT dependency closure via cl-repository-client.
+;;;; cl-stack-ssl is CI-only (:with) for TLS test helpers; load in ci-test.
 
 (setf *debugger-hook*
       (lambda (c h)
@@ -24,96 +22,25 @@
 
 (call-with-ci-muffles (lambda () (asdf:load-system "cl-repository-client")))
 
+(defun ci-record-installed-version (system env-var)
+  (let ((ver (cl-repo:installed-system-version system))
+        (env (uiop:getenv "GITHUB_ENV")))
+    (when (and ver env)
+      (with-open-file (out env :direction :output :if-exists :append :if-does-not-exist :create)
+        (format out "~a=~a~%" env-var ver))
+      (format t "~&; ci: ~a=~a~%" env-var ver))))
+
 (cl-repo:add-registry "https://ghcr.io" :namespace "egao1980/cl-systems" :priority :prepend)
-
-(defun ci-newest-tag (oci-name)
-  "Newest version tag on ghcr.io/egao1980/cl-systems/NAME (excludes 'latest')."
-  (let* ((token (or (uiop:getenv "GITHUB_TOKEN") (uiop:getenv "GH_TOKEN")))
-         (auth (when token
-                 (cl-oci-client/auth:make-auth-config
-                  :username (or (uiop:getenv "GITHUB_ACTOR") "x-access-token")
-                  :password token)))
-         (reg (cl-oci-client/registry:make-registry "https://ghcr.io" :auth auth))
-         (repo (format nil "egao1980/cl-systems/~a" oci-name))
-         (tags (cl-oci-client/content-discovery:list-tags reg repo))
-         (version-tags (remove "latest" tags :test #'string=)))
-    (or (cl-repository-client/version-utils:select-preferred-version version-tags)
-        (first tags)
-        (error "ci-newest-tag: no tags for ~a" oci-name))))
-
-(defun ci-transient-ghcr-error-p (c)
-  "True for flaky GHCR auth/rate-limit failures worth retrying."
-  (let ((msg (princ-to-string c)))
-    (or (search "Authentication failed" msg :test #'char-equal)
-        (search "HTTP 403" msg :test #'char-equal)
-        (search "denied" msg :test #'char-equal)
-        (search "429" msg :test #'char-equal)
-        (search "timeout" msg :test #'char-equal))))
-
-(defun ci-install (oci-name &key version)
-  "Install OCI package. VERSION nil -> newest published version tag.
-   Retries transient GHCR 403/denied under matrix concurrency."
-  (let ((version (or version (ci-newest-tag oci-name)))
-        (repo (format nil "egao1980/cl-systems/~a" oci-name)))
-    (format t "~&; ci: install ~a:~a~%" oci-name version)
-    (loop for attempt from 1 to 5
-          do (handler-case
-                 (progn
-                   (cl-repository-client/installer:install-system
-                    "https://ghcr.io" repo version)
-                   (cl-repository-client/asdf-integration:configure-asdf-source-registry)
-                   (return version))
-               (error (c)
-                 (unless (and (ci-transient-ghcr-error-p c) (< attempt 5))
-                   (error c))
-                 (format t "~&; ci: install ~a:~a attempt ~a failed (~a); sleep ~as~%"
-                         oci-name version attempt c (* attempt 4))
-                 (sleep (* attempt 4)))))
-    version))
-
-(defun ci-patch-stack-ssl (&optional version)
-  (let* ((root (cl-repository-client/installer:systems-root))
-         (setup
-           (or (when version
-                 (probe-file
-                  (merge-pathnames
-                   (format nil "cl-stack-ssl/~a/src/setup.lisp" version) root)))
-               (first (directory
-                       (merge-pathnames "cl-stack-ssl/*/src/setup.lisp" root))))))
-    (when setup
-      (let* ((text (uiop:read-file-string setup))
-             (fixed (search "(defconstant +openssl-version+" text :test #'char-equal)))
-        (when fixed
-          (setf text (concatenate 'string
-                                  (subseq text 0 fixed)
-                                  "(defparameter +openssl-version+"
-                                  (subseq text (+ fixed (length "(defconstant +openssl-version+")))))
-          (with-open-file (out setup :direction :output :if-exists :supersede)
-            (write-string text out))
-          (format t "~&; ci: patched ~a defconstant->defparameter~%" setup))))))
 
 (call-with-ci-muffles
  (lambda ()
-   (let ((cl-stack-ssl-version (uiop:getenv "CL_STACK_SSL_VERSION")))
-     ;; All OCI installs before any ql:quickload that might load cffi/cl+ssl.
-     (ci-install "cl-plus-ssl" :version "latest")
-     (ci-install "cl-base64")
-     ;; No :latest tag for cl-stack-ssl — resolve newest version tag.
-     (let ((ssl-ver (ci-install "cl-stack-ssl" :version cl-stack-ssl-version)))
-       (ci-patch-stack-ssl ssl-ver)
-       (when (uiop:getenv "GITHUB_ENV")
-         (with-open-file (out (uiop:getenv "GITHUB_ENV")
-                              :direction :output
-                              :if-exists :append
-                              :if-does-not-exist :create)
-           (format out "CL_STACK_SSL_VERSION=~a~%" ssl-ver))))
-     ;; QL only for systems not in cl-systems yet. Do not ASDF-load
-     ;; cl-stack-ssl here — phase 2 loads it with overlay on loader path.
-     (format t "~&; ci: ql fallback WS stack (not yet in cl-systems)~%")
-     (ql:quickload '("rove" "blackbird" "event-emitter" "quri"
-                     "websocket-driver" "clack" "clack-handler-hunchentoot"
-                     "hunchentoot")
-                   :silent t))))
+   (cl-repo:ensure-system-dependencies "ws-protocol"
+     :also-tests t
+     :with '("cl-stack-ssl")
+     :sources '(("babel" :ql)
+                ("trivial-features" :ql)
+                ("cl-unicode" :ql)))
+   (ci-record-installed-version "cl-stack-ssl" "CL_STACK_SSL_VERSION")))
 
 (format t "~&; ci: install phase done~%")
 (uiop:quit 0)
