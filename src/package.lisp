@@ -54,6 +54,7 @@
            #:make-http2-websocket-connect-headers
            #:http2-websocket-path
            #:http2-websocket-authority
+           #:feature-or-env-enabled-p
            ;; protocol
            #:connect
            #:connect-async

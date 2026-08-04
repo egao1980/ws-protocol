@@ -41,13 +41,34 @@
         (first tags)
         (error "ci-newest-tag: no tags for ~a" oci-name))))
 
+(defun ci-transient-ghcr-error-p (c)
+  "True for flaky GHCR auth/rate-limit failures worth retrying."
+  (let ((msg (princ-to-string c)))
+    (or (search "Authentication failed" msg :test #'char-equal)
+        (search "HTTP 403" msg :test #'char-equal)
+        (search "denied" msg :test #'char-equal)
+        (search "429" msg :test #'char-equal)
+        (search "timeout" msg :test #'char-equal))))
+
 (defun ci-install (oci-name &key version)
-  "Install OCI package. VERSION nil -> newest published version tag."
-  (let ((version (or version (ci-newest-tag oci-name))))
+  "Install OCI package. VERSION nil -> newest published version tag.
+   Retries transient GHCR 403/denied under matrix concurrency."
+  (let ((version (or version (ci-newest-tag oci-name)))
+        (repo (format nil "egao1980/cl-systems/~a" oci-name)))
     (format t "~&; ci: install ~a:~a~%" oci-name version)
-    (cl-repository-client/installer:install-system
-     "https://ghcr.io" (format nil "egao1980/cl-systems/~a" oci-name) version)
-    (cl-repository-client/asdf-integration:configure-asdf-source-registry)
+    (loop for attempt from 1 to 5
+          do (handler-case
+                 (progn
+                   (cl-repository-client/installer:install-system
+                    "https://ghcr.io" repo version)
+                   (cl-repository-client/asdf-integration:configure-asdf-source-registry)
+                   (return version))
+               (error (c)
+                 (unless (and (ci-transient-ghcr-error-p c) (< attempt 5))
+                   (error c))
+                 (format t "~&; ci: install ~a:~a attempt ~a failed (~a); sleep ~as~%"
+                         oci-name version attempt c (* attempt 4))
+                 (sleep (* attempt 4)))))
     version))
 
 (defun ci-patch-stack-ssl (&optional version)
