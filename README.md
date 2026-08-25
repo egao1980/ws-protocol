@@ -28,19 +28,14 @@ Local echo demo: `ros -l scripts/demo.lisp`. Recipes: [cl-stack websocket cookbo
 
 ## Install / test
 
-**Deps = [cl-repository](https://github.com/egao1980/cl-repository)** against `ghcr.io/egao1980/cl-systems` (same as http-backend-*). CI: `scripts/ci-install.lisp` + `scripts/ci-test.lisp`.
-
-WS stack libs (`websocket-driver`, `clack`, …) are not OCI-published yet → temporary QL fallback in `ci-install.lisp` until `cl-stack-systems/imports/` grows them.
+CI: canned [`cl-repository`](https://github.com/egao1980/cl-repository) (`test-system.yml` / `setup-client` + `ci`). Deps from `ghcr.io/egao1980/cl-systems`.
 
 ```bash
-# CI-shaped local run (needs cl-repository checkout + GHCR read):
-export CL_SOURCE_REGISTRY="$(pwd)//:/path/to/cl-repository//:"
-ros -l scripts/ci-install.lisp -q
-# stage cl-stack-ssl native/ onto LD_LIBRARY_PATH, then:
-ros -l scripts/ci-test.lisp -q
+# Local: client on the ASDF registry, then
+(asdf:test-system "ws-protocol")
 
-# WSS smoke:
-WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -l scripts/ci-test.lisp -q
+# WSS smoke (env still honored by the test system):
+WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -e '(asdf:test-system "ws-protocol")'
 
 # Clean-container OCI path (linux/amd64, no libssl-dev):
 # ./scripts/smoke-wss-clean-container.sh
@@ -48,12 +43,10 @@ WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -l scripts/ci-test.lisp -q
 
 ## Publish
 
-Source-only OCI publish is centralized in [`cl-stack-systems`](https://github.com/egao1980/cl-stack-systems)
-(`imports/ws-protocol/qlfile` pin + shared `publish.yml`). Packaging metadata lives in the `.asd`
-(`auto-package-spec`):
+Owning-repo canned [`publish-source.yml`](https://github.com/egao1980/cl-repository/blob/main/.github/workflows/publish-source.yml):
 
 ```bash
-gh workflow run publish.yml -R egao1980/cl-stack-systems -f import=ws-protocol
+gh workflow run publish-checkout.yml -R egao1980/ws-protocol
 ```
 
 ## License
