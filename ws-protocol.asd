@@ -7,11 +7,6 @@
   :properties
   (:cl-repo
    (:ci (:with ("cl-stack-ssl")
-         :sources (("babel" :ql) ("trivial-features" :ql) ("cl-unicode" :ql)
-                   ("rove" :ql) ("event-emitter" :ql)
-                   ("websocket-driver" :ql) ("websocket-driver-client" :ql)
-                   ("clack" :ql) ("clack-handler-hunchentoot" :ql)
-                   ("hunchentoot" :ql))
          :load-before-test ("cl+ssl" "cl-stack-ssl")
          :record-versions (("cl-stack-ssl" . "CL_STACK_SSL_VERSION")))))
   :serial t
