@@ -4,11 +4,6 @@
   :author "egao1980"
   :license "MIT"
   :depends-on ("blackbird" "cl-base64" "bordeaux-threads" "quri" "uiop")
-  :properties
-  (:cl-repo
-   (:ci (:with ("cl-stack-ssl")
-         :load-before-test ("cl+ssl" "cl-stack-ssl")
-         :record-versions (("cl-stack-ssl" . "CL_STACK_SSL_VERSION")))))
   :serial t
   :pathname "src"
   :components ((:file "package")
@@ -21,30 +16,13 @@
                (:file "facade"))
   :in-order-to ((test-op (test-op "ws-protocol/tests"))))
 
-(defsystem "ws-backend-websocket-driver"
-  :version "0.2.2"
-  :description "websocket-driver backend for ws-protocol"
-  :author "egao1980"
-  :license "MIT"
-  :depends-on ("ws-protocol" "websocket-driver-client" "event-emitter")
-  :serial t
-  :pathname "backend"
-  :components ((:file "package")
-               (:file "websocket-driver"))
-  :in-order-to ((test-op (test-op "ws-protocol/tests"))))
-
 (defsystem "ws-protocol/tests"
-  :depends-on ("ws-protocol" "ws-backend-websocket-driver" "rove"
-               "websocket-driver" "clack" "clack-handler-hunchentoot"
-               "hunchentoot" "bordeaux-threads")
+  :depends-on ("ws-protocol" "rove")
   :pathname "tests"
   :serial t
   :components ((:file "package")
-               (:file "echo-fixture")
                (:file "protocol-test")
-               (:file "transport-test")
-               (:file "backend-test")
-               (:file "wss-test"))
+               (:file "transport-test"))
   :perform (test-op (o c)
              (unless (symbol-call :rove :run c)
                (error "tests failed for ~A" (component-name c)))))
