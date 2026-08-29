@@ -4,14 +4,15 @@ MIT WebSocket **client** protocol for [cl-stack](https://github.com/egao1980/cl-
 
 Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack/blob/main/docs/capabilities/ws-protocol.md) · Tracks `#34` / `#35`.
 
-**0.2.2** — CLOS transport preference + `feature-or-env-enabled-p`; cookbook/demo. Wire for `:http/2` lives in HTTP backends (`http-backend-async`).
+**0.2.2** — CLOS transport preference + `feature-or-env-enabled-p`. Product backends are separate repos.
 
 ## Systems
 
 | ASDF | Role |
 |------|------|
 | `ws-protocol` | Generics, conditions, transport policy, `ws` facade (promises via Blackbird) |
-| `ws-backend-websocket-driver` | [`websocket-driver`](https://github.com/fukamachi/websocket-driver) — `:http/1.1` Upgrade |
+
+H1 Upgrade: [`ws-backend-websocket-driver`](https://github.com/egao1980/ws-backend-websocket-driver). H2 Extended CONNECT: [`http-backend-async`](https://github.com/egao1980/http-backend-async). Windows H1: [`http-backend-winhttp`](https://github.com/egao1980/http-backend-winhttp).
 
 ```lisp
 (asdf:load-system "ws-backend-websocket-driver")
@@ -22,9 +23,7 @@ Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack
     (ws:send conn "hi")))
 ```
 
-Local echo demo: `ros -l scripts/demo.lisp`. Recipes: [cl-stack websocket cookbook](https://github.com/egao1980/cl-stack/blob/main/docs/cookbooks/websocket.md).
-
-`wss://` uses cl+ssl (driver); production TLS = `cl-stack-ssl` overlay (`#35`).
+Local echo demo: `ros -l scripts/demo.lisp` in the backend repo. Recipes: [cl-stack websocket cookbook](https://github.com/egao1980/cl-stack/blob/main/docs/cookbooks/websocket.md).
 
 ## Install / test
 
@@ -33,13 +32,9 @@ CI: canned [`cl-repository`](https://github.com/egao1980/cl-repository) (`test-s
 ```bash
 # Local: client on the ASDF registry, then
 (asdf:test-system "ws-protocol")
-
-# WSS smoke (env still honored by the test system):
-WS_PROTOCOL_WSS=1 WS_PROTOCOL_WSS_CHILD=1 ros -e '(asdf:test-system "ws-protocol")'
-
-# Clean-container OCI path (linux/amd64, no libssl-dev):
-# ./scripts/smoke-wss-clean-container.sh
 ```
+
+Protocol tests use an in-tree mock backend. Driver echo / WSS smoke live in `ws-backend-websocket-driver`.
 
 ## Publish
 
