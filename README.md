@@ -42,8 +42,9 @@ Owning-repo canned [`publish-source.yml`](https://github.com/egao1980/cl-reposit
 
 ```bash
 gh workflow run publish-checkout.yml -R egao1980/ws-protocol
-# also publishes ws-backend-websocket-driver (GHCR ACL still linked here; see workflow)
 ```
+
+H1 driver: `gh workflow run publish-checkout.yml -R egao1980/ws-backend-websocket-driver`
 
 ## License
 

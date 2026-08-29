@@ -11,13 +11,8 @@ on:
       packager_version:
         description: "Packager image version"
         required: false
-        default: "0.16.0"
+        default: "latest"
         type: string
-      publish_backend:
-        description: "Also publish ws-backend-websocket-driver (GHCR ACL)"
-        required: false
-        default: true
-        type: boolean
 
 jobs:
   publish:
@@ -28,34 +23,3 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-  # First owning-repo publish of ws-backend-websocket-driver 403'd
-  # (permission_denied: write_package). Same GHCR ACL as sql-query dialects:
-  # package create/write is tied to this repo. Grant Write to
-  # egao1980/ws-backend-websocket-driver on the GHCR package, then drop this job.
-  publish-backend:
-    if: ${{ inputs.publish_backend }}
-    needs: publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      SBCL_VERSION: 2.6.7
-      ROSWELL_VERSION: "26.02.116"
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          repository: egao1980/ws-backend-websocket-driver
-      - uses: egao1980/cl-repository/.github/actions/setup-client@main
-      - uses: egao1980/cl-repository/.github/actions/setup-roswell@main
-        with:
-          sbcl-version: ${{ env.SBCL_VERSION }}
-          roswell-version: ${{ env.ROSWELL_VERSION }}
-      - uses: egao1980/cl-repository/.github/actions/ci@main
-        with:
-          phase: publish
-          system: ws-backend-websocket-driver
-          version: ${{ inputs.version }}
-          packager-version: ${{ inputs.packager_version }}
