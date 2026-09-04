@@ -63,14 +63,25 @@
            #:ping
            #:close-connection
            #:on-event
-           #:ready-state)
+           #:ready-state
+           #:ws-server
+           #:ws-server-host
+           #:ws-server-port
+           #:ws-server-path
+           #:ws-server-running-p
+           #:ws-server-on-connect
+           #:ws-server-impl
+           #:accept
+           #:make-ws-server
+           #:start-ws-server
+           #:stop-ws-server)
   (:documentation
    "WebSocket client protocol (RFC 6455 + RFC 8441 transport preference)."))
 
 (defpackage #:ws
   (:use #:cl #:ws-protocol)
   ;; Facade helpers share names with protocol generics — keep separate symbols.
-  (:shadow #:connect #:connect-async #:ping #:close #:send)
+  (:shadow #:connect #:connect-async #:ping #:close #:send #:accept)
   (:export #:connect
            #:connect-async
            #:send
@@ -78,6 +89,8 @@
            #:close
            #:on
            #:with-connection
+           #:accept
+           #:make-server
            #:*ws-backend*
            #:*ws-client*
            #:ws-message

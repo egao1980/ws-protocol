@@ -68,3 +68,33 @@
   (:method ((connection ws-connection) event handler)
     (declare (ignore event handler))
     (error 'unsupported-operation :operation 'on-event)))
+
+(defgeneric accept (backend env &key)
+  (:documentation
+   "Accept a WebSocket from a Clack ENV → WS-CONNECTION (H1 Upgrade).
+    Caller starts the driver (backend-specific).")
+  (:method ((backend ws-backend) env &key)
+    (declare (ignore env))
+    (error 'unsupported-operation :operation 'accept
+           :message (format nil "backend ~A does not implement ACCEPT"
+                            (backend-name backend)))))
+
+(defgeneric make-ws-server (backend &key host port path ssl-cert ssl-key on-connect)
+  (:documentation "Return a stopped WS-SERVER ready to START-WS-SERVER.")
+  (:method ((backend ws-backend) &key host port path ssl-cert ssl-key on-connect)
+    (declare (ignore host port path ssl-cert ssl-key on-connect))
+    (error 'unsupported-operation :operation 'make-ws-server
+           :message (format nil "backend ~A does not implement MAKE-WS-SERVER"
+                            (backend-name backend)))))
+
+(defgeneric start-ws-server (server &key background)
+  (:documentation "Bind/listen. BACKGROUND T → return immediately.")
+  (:method ((server ws-server) &key background)
+    (declare (ignore background))
+    (error 'unsupported-operation :operation 'start-ws-server)))
+
+(defgeneric stop-ws-server (server)
+  (:documentation "Stop accepting.")
+  (:method ((server ws-server))
+    (setf (ws-server-running-p server) nil)
+    server))

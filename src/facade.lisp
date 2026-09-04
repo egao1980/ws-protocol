@@ -71,3 +71,13 @@
   `(let ((,var (connect ,url ,@keys)))
      (unwind-protect (progn ,@body)
        (ignore-errors (close ,var)))))
+
+(defun accept (env &key (backend nil))
+  "Accept a WebSocket from Clack ENV."
+  (ws-protocol:accept (%backend backend) env))
+
+(defun make-server (&key (backend nil) host port path ssl-cert ssl-key on-connect)
+  (ws-protocol:make-ws-server (%backend backend)
+                              :host host :port port :path path
+                              :ssl-cert ssl-cert :ssl-key ssl-key
+                              :on-connect on-connect))

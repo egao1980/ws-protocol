@@ -53,6 +53,10 @@
     (ws:close conn)
     (ok (eq :closed (ready-state conn)))))
 
+(deftest accept-default-unimplemented
+  (let ((*ws-backend* (make-instance 'mock-backend)))
+    (ok (signals (ws:accept '()) 'unsupported-operation))))
+
 (deftest connect-rejects-unsupported-transport
   (let ((*ws-backend* (make-instance 'mock-backend)))
     (ok (signals (ws:connect "ws://example/echo" :transport :http/2)

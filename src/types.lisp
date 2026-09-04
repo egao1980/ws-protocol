@@ -63,3 +63,12 @@
 (defmacro with-ws-client ((client) &body body)
   `(let ((*ws-client* ,client))
      ,@body))
+
+(defclass ws-server ()
+  ((host :initarg :host :reader ws-server-host :initform "127.0.0.1")
+   (port :initarg :port :reader ws-server-port)
+   (path :initarg :path :reader ws-server-path :initform "/echo")
+   (running :initform nil :accessor ws-server-running-p)
+   (on-connect :initarg :on-connect :accessor ws-server-on-connect :initform nil)
+   (impl :initform nil :accessor ws-server-impl))
+  (:documentation "H1 Upgrade listener. Backends stash the Clack handler in IMPL."))
