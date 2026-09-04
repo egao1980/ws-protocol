@@ -1,10 +1,10 @@
 # ws-protocol
 
-MIT WebSocket **client** protocol for [cl-stack](https://github.com/egao1980/cl-stack) (RFC 6455 + RFC 8441 transport preference).
+MIT WebSocket protocol for [cl-stack](https://github.com/egao1980/cl-stack) (RFC 6455 client + **H1 Upgrade accept**; RFC 8441 transport preference).
 
 Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack/blob/main/docs/capabilities/ws-protocol.md) · Tracks `#34` / `#35`.
 
-**0.2.2** — CLOS transport preference + `feature-or-env-enabled-p`. Product backends are separate repos.
+**0.3.0** — `ws:accept` / `ws:make-server` / `start-ws-server` (H1 Upgrade). H2 Extended CONNECT server is follow-on.
 
 ## Systems
 
