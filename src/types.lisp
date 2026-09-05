@@ -71,4 +71,6 @@
    (running :initform nil :accessor ws-server-running-p)
    (on-connect :initarg :on-connect :accessor ws-server-on-connect :initform nil)
    (impl :initform nil :accessor ws-server-impl))
-  (:documentation "H1 Upgrade listener. Backends stash the Clack handler in IMPL."))
+  (:documentation
+   "WebSocket listener. H1 Upgrade or H2 Extended CONNECT.
+    Backends stash the handler in IMPL."))

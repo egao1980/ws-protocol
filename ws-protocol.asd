@@ -1,6 +1,6 @@
 (defsystem "ws-protocol"
-  :version "0.3.0"
-  :description "CLOS WebSocket protocol for cl-stack (client + H1 Upgrade accept)"
+  :version "0.4.0"
+  :description "CLOS WebSocket protocol for cl-stack (client + H1/H2 accept)"
   :author "egao1980"
   :license "MIT"
   :depends-on ("blackbird" "cl-base64" "bordeaux-threads" "quri" "uiop")
