@@ -1,9 +1,10 @@
 (defsystem "ws-protocol"
-  :version "0.4.0"
+  :version "0.4.1"
   :description "CLOS WebSocket protocol for cl-stack (client + H1/H2 accept)"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("blackbird" "cl-base64" "bordeaux-threads" "quri" "uiop")
+  :depends-on ("blackbird" "encoding-protocol" "bordeaux-threads" "quri" "uiop")
+  :properties (:cl-repo (:ci (:sources (("encoding-protocol" :oci)))))
   :serial t
   :pathname "src"
   :components ((:file "package")
