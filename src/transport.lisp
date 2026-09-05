@@ -171,3 +171,26 @@
            (cons :authority (http2-websocket-authority host port scheme*)))
      regular)))
 
+(defun %method-string (method)
+  (cond
+    ((null method) "")
+    ((symbolp method) (symbol-name method))
+    (t (string method))))
+
+(defun header-map-get (headers name)
+  (when (hash-table-p headers)
+    (or (gethash name headers)
+        (gethash (string-downcase name) headers)
+        (gethash (string-upcase name) headers))))
+
+(defun extended-connect-protocol (env)
+  "RFC 8441 :protocol from a Clack ENV plist."
+  (or (getf env :protocol)
+      (header-map-get (getf env :headers) "protocol")
+      (header-map-get (getf env :headers) ":protocol")))
+
+(defun extended-connect-request-p (env)
+  "True when ENV is Extended CONNECT WebSocket (RFC 8441)."
+  (and (string-equal (%method-string (getf env :request-method)) "CONNECT")
+       (string-equal (extended-connect-protocol env) "websocket")))
+

@@ -28,6 +28,19 @@
     (ok (equal "a" (cdr (assoc "x-token" hdrs :test #'string=))))
     (ok (null (assoc "connection" hdrs :test #'string-equal)))))
 
+(deftest extended-connect-request-p-from-env
+  (let ((headers (make-hash-table :test 'equal)))
+    (setf (gethash "protocol" headers) "websocket")
+    (ok (extended-connect-request-p
+         (list :request-method :connect :headers headers)))
+    (ok (extended-connect-request-p
+         (list :request-method "CONNECT" :protocol "websocket")))
+    (ng (extended-connect-request-p
+         (list :request-method :get :protocol "websocket")))
+    (ok (equal "websocket"
+               (extended-connect-protocol
+                (list :headers headers))))))
+
 (deftest feature-or-env-enabled-p-basic
   (ok (feature-or-env-enabled-p :common-lisp))
   (ok (not (feature-or-env-enabled-p :definitely-not-a-feature-xyzzy)))

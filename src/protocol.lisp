@@ -71,7 +71,8 @@
 
 (defgeneric accept (backend env &key)
   (:documentation
-   "Accept a WebSocket from a Clack ENV → WS-CONNECTION (H1 Upgrade).
+   "Accept a WebSocket from a Clack ENV → WS-CONNECTION.
+    H1 Upgrade or H2 Extended CONNECT (`extended-connect-request-p`).
     Caller starts the driver (backend-specific).")
   (:method ((backend ws-backend) env &key)
     (declare (ignore env))
@@ -79,10 +80,15 @@
            :message (format nil "backend ~A does not implement ACCEPT"
                             (backend-name backend)))))
 
-(defgeneric make-ws-server (backend &key host port path ssl-cert ssl-key on-connect)
-  (:documentation "Return a stopped WS-SERVER ready to START-WS-SERVER.")
-  (:method ((backend ws-backend) &key host port path ssl-cert ssl-key on-connect)
-    (declare (ignore host port path ssl-cert ssl-key on-connect))
+(defgeneric make-ws-server (backend &key host port path ssl-cert ssl-key
+                                      on-connect transport)
+  (:documentation
+   "Return a stopped WS-SERVER ready to START-WS-SERVER.
+    TRANSPORT — :auto | :http/1.1 (RFC 6455 Upgrade) | :http/2 (RFC 8441).
+    :http/2 requires :ssl-cert / :ssl-key.")
+  (:method ((backend ws-backend) &key host port path ssl-cert ssl-key
+                                   on-connect transport)
+    (declare (ignore host port path ssl-cert ssl-key on-connect transport))
     (error 'unsupported-operation :operation 'make-ws-server
            :message (format nil "backend ~A does not implement MAKE-WS-SERVER"
                             (backend-name backend)))))

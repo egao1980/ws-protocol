@@ -76,8 +76,10 @@
   "Accept a WebSocket from Clack ENV."
   (ws-protocol:accept (%backend backend) env))
 
-(defun make-server (&key (backend nil) host port path ssl-cert ssl-key on-connect)
+(defun make-server (&key (backend nil) host port path ssl-cert ssl-key
+                      on-connect (transport :auto))
   (ws-protocol:make-ws-server (%backend backend)
                               :host host :port port :path path
                               :ssl-cert ssl-cert :ssl-key ssl-key
-                              :on-connect on-connect))
+                              :on-connect on-connect
+                              :transport transport))
