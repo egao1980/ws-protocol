@@ -4,7 +4,7 @@
   :author "egao1980"
   :license "MIT"
   :depends-on ("blackbird" "encoding-protocol" "bordeaux-threads" "quri" "uiop")
-  :properties (:cl-repo (:ci (:sources (("encoding-protocol" :oci)))))
+  :properties (:cl-repo (:ci ()))
   :serial t
   :pathname "src"
   :components ((:file "package")
