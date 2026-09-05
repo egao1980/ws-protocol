@@ -4,7 +4,7 @@
   :author "egao1980"
   :license "MIT"
   :depends-on ("blackbird" "encoding-protocol" "bordeaux-threads" "quri" "uiop")
-:serial t
+  :serial t
   :pathname "src"
   :components ((:file "package")
                (:file "conditions")
