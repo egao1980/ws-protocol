@@ -1,6 +1,6 @@
 (defsystem "ws-protocol"
-  :version "0.4.1"
-  :description "CLOS WebSocket protocol for cl-stack (client + H1/H2 accept)"
+  :version "0.4.2"
+  :description "CLOS WebSocket protocol for cl-stack (client + H1/H2 accept + deflate)"
   :author "egao1980"
   :license "MIT"
   :depends-on ("blackbird" "encoding-protocol" "bordeaux-threads" "quri" "uiop")
@@ -12,6 +12,7 @@
                (:file "auth")
                (:file "features")
                (:file "transport")
+               (:file "compression")
                (:file "protocol")
                (:file "facade"))
   :in-order-to ((test-op (test-op "ws-protocol/tests"))))

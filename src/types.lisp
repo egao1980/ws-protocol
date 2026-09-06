@@ -21,7 +21,10 @@
    (verify :initarg :verify :accessor ws-client-verify :initform t
            :documentation "TLS verify for wss:// (passed to backend).")
    (ca-path :initarg :ca-path :accessor ws-client-ca-path :initform nil
-            :documentation "Optional CA file/dir for wss:// verify (cl+ssl).")))
+            :documentation "Optional CA file/dir for wss:// verify (cl+ssl).")
+   (compression :initarg :compression :accessor ws-client-compression :initform nil
+                :documentation
+                "NIL | :deflate (RFC 7692 permessage-deflate).")))
 
 (defun ws-client-p (x) (typep x 'ws-client))
 
@@ -70,6 +73,8 @@
    (path :initarg :path :reader ws-server-path :initform "/echo")
    (running :initform nil :accessor ws-server-running-p)
    (on-connect :initarg :on-connect :accessor ws-server-on-connect :initform nil)
+   (compression :initarg :compression :accessor ws-server-compression :initform nil
+                :documentation "NIL | :deflate (RFC 7692 permessage-deflate).")
    (impl :initform nil :accessor ws-server-impl))
   (:documentation
    "WebSocket listener. H1 Upgrade or H2 Extended CONNECT.

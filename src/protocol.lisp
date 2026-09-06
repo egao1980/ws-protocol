@@ -10,7 +10,8 @@
     :BEFORE resolves the transport against BACKEND-WS-TRANSPORTS.")
   (:method :before ((backend ws-backend) client url &key transport)
     (declare (ignore url))
-    (resolve-ws-transport backend client :transport transport))
+    (resolve-ws-transport backend client :transport transport)
+    (resolve-ws-compression backend client))
   (:method ((backend ws-backend) client url &key transport)
     (declare (ignore client url transport))
     (error 'unsupported-operation :operation 'connect
@@ -24,7 +25,8 @@
     Default: BT thread around CONNECT.")
   (:method :before ((backend ws-backend) client url &key transport callback error-callback)
     (declare (ignore url callback error-callback))
-    (resolve-ws-transport backend client :transport transport))
+    (resolve-ws-transport backend client :transport transport)
+    (resolve-ws-compression backend client))
   (:method ((backend ws-backend) client url &key transport callback error-callback)
     (bt:make-thread
      (lambda ()
@@ -69,26 +71,29 @@
     (declare (ignore event handler))
     (error 'unsupported-operation :operation 'on-event)))
 
-(defgeneric accept (backend env &key)
+(defgeneric accept (backend env &key compression)
   (:documentation
    "Accept a WebSocket from a Clack ENV → WS-CONNECTION.
     H1 Upgrade or H2 Extended CONNECT (`extended-connect-request-p`).
+    COMPRESSION — NIL | :deflate (RFC 7692 permessage-deflate).
     Caller starts the driver (backend-specific).")
-  (:method ((backend ws-backend) env &key)
-    (declare (ignore env))
+  (:method ((backend ws-backend) env &key compression)
+    (declare (ignore env compression))
     (error 'unsupported-operation :operation 'accept
            :message (format nil "backend ~A does not implement ACCEPT"
                             (backend-name backend)))))
 
 (defgeneric make-ws-server (backend &key host port path ssl-cert ssl-key
-                                      on-connect transport)
+                                      on-connect transport compression)
   (:documentation
    "Return a stopped WS-SERVER ready to START-WS-SERVER.
     TRANSPORT — :auto | :http/1.1 (RFC 6455 Upgrade) | :http/2 (RFC 8441).
-    :http/2 requires :ssl-cert / :ssl-key.")
+    :http/2 requires :ssl-cert / :ssl-key.
+    COMPRESSION — NIL | :deflate (RFC 7692 permessage-deflate).")
   (:method ((backend ws-backend) &key host port path ssl-cert ssl-key
-                                   on-connect transport)
-    (declare (ignore host port path ssl-cert ssl-key on-connect transport))
+                                   on-connect transport compression)
+    (declare (ignore host port path ssl-cert ssl-key on-connect transport
+                     compression))
     (error 'unsupported-operation :operation 'make-ws-server
            :message (format nil "backend ~A does not implement MAKE-WS-SERVER"
                             (backend-name backend)))))

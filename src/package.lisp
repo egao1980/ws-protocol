@@ -10,6 +10,9 @@
            #:ws-transport-not-available
            #:ws-transport-not-available-requested
            #:ws-transport-not-available-negotiated
+           #:ws-compression-not-available
+           #:ws-compression-not-available-requested
+           #:ws-compression-not-available-negotiated
            #:ws-error-message
            ;; types
            #:ws-backend
@@ -25,6 +28,7 @@
            #:ws-client-proxy
            #:ws-client-verify
            #:ws-client-ca-path
+           #:ws-client-compression
            #:make-ws-client
            #:ws-connection
            #:ws-connection-p
@@ -57,6 +61,18 @@
            #:extended-connect-request-p
            #:extended-connect-protocol
            #:feature-or-env-enabled-p
+           ;; compression (RFC 7692)
+           #:*valid-ws-compressions*
+           #:normalize-ws-compression
+           #:ws-compression-preference-p
+           #:backend-ws-compressions
+           #:backend-supports-ws-compression-p
+           #:resolve-ws-compression
+           #:permessage-deflate-offer
+           #:permessage-deflate-response
+           #:parse-sec-websocket-extensions
+           #:permessage-deflate-accepted-p
+           #:env-sec-websocket-extensions
            ;; protocol
            #:connect
            #:connect-async
@@ -72,13 +88,14 @@
            #:ws-server-path
            #:ws-server-running-p
            #:ws-server-on-connect
+           #:ws-server-compression
            #:ws-server-impl
            #:accept
            #:make-ws-server
            #:start-ws-server
            #:stop-ws-server)
   (:documentation
-   "WebSocket client protocol (RFC 6455 + RFC 8441 transport preference)."))
+   "WebSocket client protocol (RFC 6455 + RFC 8441 + RFC 7692 deflate)."))
 
 (defpackage #:ws
   (:use #:cl #:ws-protocol)

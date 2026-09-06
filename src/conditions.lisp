@@ -31,3 +31,15 @@
                      (ws-transport-not-available-requested c)
                      (ws-transport-not-available-negotiated c)
                      (ws-error-message c)))))
+
+(define-condition ws-compression-not-available (unsupported-operation)
+  ((requested :initarg :requested :reader ws-compression-not-available-requested
+              :initform :deflate)
+   (negotiated :initarg :negotiated :reader ws-compression-not-available-negotiated
+               :initform nil))
+  (:default-initargs :operation 'ws-compression)
+  (:report (lambda (c s)
+             (format s "WS compression ~S not available~@[ (negotiated ~S)~]~@[ — ~A~]"
+                     (ws-compression-not-available-requested c)
+                     (ws-compression-not-available-negotiated c)
+                     (ws-error-message c)))))

@@ -41,6 +41,39 @@
                (extended-connect-protocol
                 (list :headers headers))))))
 
+(deftest normalize-ws-compression
+  (ok (null (normalize-ws-compression nil)))
+  (ok (eq :deflate (normalize-ws-compression :deflate)))
+  (ok (eq :deflate (normalize-ws-compression :permessage-deflate)))
+  (ok (eq :deflate (normalize-ws-compression "deflate")))
+  (ok (null (normalize-ws-compression "off"))))
+
+(deftest backend-ws-compressions-default-empty
+  (let ((b (make-instance 'ws-backend :name "bare")))
+    (ok (null (backend-ws-compressions b)))
+    (ok (backend-supports-ws-compression-p b nil))
+    (ok (not (backend-supports-ws-compression-p b :deflate)))))
+
+(deftest parse-sec-websocket-extensions-deflate
+  (let ((exts (parse-sec-websocket-extensions
+               "permessage-deflate; client_no_context_takeover, mux")))
+    (ok (equal "permessage-deflate" (car (first exts))))
+    (ok (eq t (cdr (assoc "client_no_context_takeover" (cdr (first exts))
+                          :test #'string=))))
+    (ok (permessage-deflate-accepted-p
+         "permessage-deflate; server_no_context_takeover"))
+    (ok (not (permessage-deflate-accepted-p "mux")))))
+
+(deftest permessage-deflate-offer-mentions-extension
+  (ok (search "permessage-deflate" (permessage-deflate-offer)))
+  (ok (search "permessage-deflate" (permessage-deflate-response))))
+
+(deftest resolve-ws-compression-rejects-unsupported
+  (let ((b (make-instance 'ws-backend :name "bare"))
+        (c (make-ws-client (make-instance 'ws-backend :name "bare")
+                           :compression :deflate)))
+    (ok (signals (resolve-ws-compression b c) 'ws-compression-not-available))))
+
 (deftest feature-or-env-enabled-p-basic
   (ok (feature-or-env-enabled-p :common-lisp))
   (ok (not (feature-or-env-enabled-p :definitely-not-a-feature-xyzzy)))
