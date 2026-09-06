@@ -62,6 +62,11 @@
     (ok (signals (ws:connect "ws://example/echo" :transport :http/2)
                  'ws-transport-not-available))))
 
+(deftest connect-rejects-unsupported-compression
+  (let ((*ws-backend* (make-instance 'mock-backend)))
+    (ok (signals (ws:connect "ws://example/echo" :compression :deflate)
+                 'ws-compression-not-available))))
+
 (deftest facade-connect-async
   (let* ((*ws-backend* (make-instance 'mock-backend))
          (done nil)

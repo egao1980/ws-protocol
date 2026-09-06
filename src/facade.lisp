@@ -9,10 +9,11 @@
 
 (defun connect (url &key (backend nil) (client nil clientp)
                       headers protocols auth proxy (verify t) ca-path
-                      (transport :auto))
+                      (transport :auto) compression)
   "Blocking WebSocket connect → WS-CONNECTION.
 
-   TRANSPORT — :auto | :http/1.1 (RFC 6455 Upgrade) | :http/2 (RFC 8441)."
+   TRANSPORT — :auto | :http/1.1 (RFC 6455 Upgrade) | :http/2 (RFC 8441).
+   COMPRESSION — NIL | :deflate (RFC 7692 permessage-deflate)."
   (let* ((backend (%backend backend))
          (client (if clientp
                      client
@@ -24,12 +25,13 @@
                                          :auth auth
                                          :proxy proxy
                                          :verify verify
-                                         :ca-path ca-path)))))
+                                         :ca-path ca-path
+                                         :compression compression)))))
     (ws-protocol:connect backend client url :transport transport)))
 
 (defun connect-async (url &key (backend nil) (client nil clientp)
                             headers protocols auth proxy (verify t) ca-path
-                            (transport :auto))
+                            (transport :auto) compression)
   "Async connect → Blackbird promise of WS-CONNECTION.
    Do not call blocking CONNECT on an event-protocol loop thread."
   (let* ((backend (%backend backend))
@@ -43,7 +45,8 @@
                                          :auth auth
                                          :proxy proxy
                                          :verify verify
-                                         :ca-path ca-path)))))
+                                         :ca-path ca-path
+                                         :compression compression)))))
     (blackbird:with-promise (resolve reject)
       (ws-protocol:connect-async
        backend client url
@@ -72,14 +75,15 @@
      (unwind-protect (progn ,@body)
        (ignore-errors (close ,var)))))
 
-(defun accept (env &key (backend nil))
+(defun accept (env &key (backend nil) compression)
   "Accept a WebSocket from Clack ENV."
-  (ws-protocol:accept (%backend backend) env))
+  (ws-protocol:accept (%backend backend) env :compression compression))
 
 (defun make-server (&key (backend nil) host port path ssl-cert ssl-key
-                      on-connect (transport :auto))
+                      on-connect (transport :auto) compression)
   (ws-protocol:make-ws-server (%backend backend)
                               :host host :port port :path path
                               :ssl-cert ssl-cert :ssl-key ssl-key
                               :on-connect on-connect
-                              :transport transport))
+                              :transport transport
+                              :compression compression))

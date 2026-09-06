@@ -4,7 +4,7 @@ MIT WebSocket protocol for [cl-stack](https://github.com/egao1980/cl-stack) (RFC
 
 Brief: [`docs/capabilities/ws-protocol.md`](https://github.com/egao1980/cl-stack/blob/main/docs/capabilities/ws-protocol.md) · Tracks `#34` / `#35`.
 
-**0.4.0** — `ws:accept` / `ws:make-server` / `start-ws-server` (H1 Upgrade **or** H2 Extended CONNECT via `:transport :http/2`). `extended-connect-request-p` for Clack env.
+**0.4.2** — `:compression :deflate` (RFC 7692 permessage-deflate negotiation knobs). **0.4.0** — `ws:accept` / `ws:make-server` / `start-ws-server` (H1 Upgrade **or** H2 Extended CONNECT via `:transport :http/2`). `extended-connect-request-p` for Clack env.
 
 ## Systems
 
