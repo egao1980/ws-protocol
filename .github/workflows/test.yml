@@ -12,3 +12,11 @@ jobs:
     uses: egao1980/cl-repository/.github/workflows/test-system.yml@main
     with:
       system: ws-protocol
+
+  test-ecl:
+    uses: egao1980/cl-repository/.github/workflows/test-system-impl.yml@cursor/test-system-impl-1989
+    permissions:
+      contents: read
+      packages: read
+    with:
+      lisp: ecl
